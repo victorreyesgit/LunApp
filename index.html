@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Moonwatch — a quiet page about the Moon</title>
+<meta name="description" content="Moon phase, illumination and rise/set times, calculated entirely on your device." />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="page">
+
+  <header class="site-header">
+    <h1>Moonwatch</h1>
+    <p class="tagline">Everything here is calculated on your device. Nothing is sent anywhere.</p>
+  </header>
+
+  <main>
+
+    <!-- Hero: the Moon itself -->
+    <section class="hero" aria-label="Current moon phase">
+      <svg id="moon-svg" viewBox="0 0 200 200" role="img" aria-labelledby="moon-svg-title">
+        <title id="moon-svg-title">Illustration of the Moon's current illuminated shape</title>
+        <defs>
+          <clipPath id="lit-clip">
+            <circle id="lit-clip-circle" cx="100" cy="100" r="80" />
+          </clipPath>
+          <radialGradient id="lit-shade" cx="38%" cy="34%" r="75%">
+            <stop offset="0%" stop-color="var(--moon-lit-hi)" />
+            <stop offset="100%" stop-color="var(--moon-lit)" />
+          </radialGradient>
+          <radialGradient id="dark-shade" cx="60%" cy="65%" r="80%">
+            <stop offset="0%" stop-color="var(--moon-dark-hi)" />
+            <stop offset="100%" stop-color="var(--moon-dark)" />
+          </radialGradient>
+        </defs>
+
+        <circle cx="100" cy="100" r="80" fill="url(#dark-shade)" />
+
+        <g clip-path="url(#lit-clip)">
+          <circle cx="100" cy="100" r="80" fill="url(#lit-shade)" />
+          <!-- decorative, static "maria" texture -->
+          <circle cx="78" cy="70" r="11" class="mare" />
+          <circle cx="118" cy="92" r="7" class="mare" />
+          <circle cx="92" cy="120" r="9" class="mare" />
+          <circle cx="126" cy="60" r="4.5" class="mare" />
+        </g>
+
+        <circle cx="100" cy="100" r="80" fill="none" class="moon-rim" />
+      </svg>
+
+      <p id="phase-name" class="phase-name">Loading…</p>
+
+      <dl class="phase-stats">
+        <div><dt>Illumination</dt><dd id="illumination-value">—</dd></div>
+        <div><dt>Age</dt><dd id="moon-age">—</dd></div>
+        <div><dt>Trend</dt><dd id="moon-trend">—</dd></div>
+      </dl>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- Location -->
+    <section class="panel" aria-label="Location">
+      <div class="location-row">
+        <p id="location-status" class="location-status">Finding your location…</p>
+        <button id="change-location-btn" type="button" class="link-btn">Change location</button>
+      </div>
+
+      <form id="location-form" class="location-form" hidden>
+        <p id="location-denied-note" class="fine-print" hidden>
+          We couldn't get your location automatically. You can enter it by hand — it stays in your browser.
+        </p>
+        <div class="field-row">
+          <label for="lat-input">Latitude</label>
+          <input id="lat-input" type="number" step="0.0001" min="-90" max="90" placeholder="e.g. 46.5197" inputmode="decimal" />
+        </div>
+        <div class="field-row">
+          <label for="lon-input">Longitude</label>
+          <input id="lon-input" type="number" step="0.0001" min="-180" max="180" placeholder="e.g. 6.6323" inputmode="decimal" />
+        </div>
+        <div class="form-actions">
+          <button id="location-save-btn" type="button" class="btn">Use this location</button>
+          <button id="location-cancel-btn" type="button" class="link-btn">Cancel</button>
+        </div>
+      </form>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- Rise / set -->
+    <section class="panel" aria-label="Moonrise and moonset">
+      <p id="location-dependent-note" class="fine-print" hidden>
+        Add your location above to see rise and set times.
+      </p>
+
+      <h2 class="section-heading">Today</h2>
+      <dl class="fact-list">
+        <div><dt>Moonrise</dt><dd id="today-rise">—</dd></div>
+        <div><dt>Moonset</dt><dd id="today-set">—</dd></div>
+      </dl>
+
+      <h2 class="section-heading">Coming up</h2>
+      <dl class="fact-list">
+        <div><dt>Next moonrise</dt><dd id="next-rise">—</dd></div>
+        <div><dt>Next moonset</dt><dd id="next-set">—</dd></div>
+        <div><dt>Next new moon</dt><dd id="next-new-moon">—</dd></div>
+        <div><dt>Next full moon</dt><dd id="next-full-moon">—</dd></div>
+      </dl>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- Explore the cycle -->
+    <section class="panel" aria-label="Explore the lunar cycle">
+      <h2 class="section-heading">Explore the cycle</h2>
+      <p id="slider-date-label" class="slider-date-label">Now</p>
+      <input id="date-slider" type="range" min="-360" max="360" step="3" value="0"
+             aria-label="Hours from now" aria-describedby="slider-date-label" />
+      <div class="slider-scale">
+        <span>15 days ago</span>
+        <span>15 days ahead</span>
+      </div>
+      <button id="jump-to-now" type="button" class="btn btn-quiet">Jump to now</button>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <details>
+      <summary>About these numbers</summary>
+      <p>
+        Every calculation happens in your browser using standard low-precision
+        astronomical formulas. New/full moon times are typically accurate to
+        within a few minutes; rise and set times to within a few minutes for
+        most locations. Extreme latitudes, mountainous horizons, and dates far
+        from today are less reliable. Full details and worked accuracy checks
+        are in the project's <code>README.md</code>.
+      </p>
+    </details>
+    <p class="fine-print">No cookies, no analytics, no network requests. Your location never leaves this device.</p>
+  </footer>
+
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

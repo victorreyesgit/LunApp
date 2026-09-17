@@ -1,0 +1,10 @@
+{
+  "name": "moonwatch",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A static, client-side only Moon phase and rise/set site. No dependencies, no build step.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

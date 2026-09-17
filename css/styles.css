@@ -1,0 +1,374 @@
+/* ---------------------------------------------------------------------
+   Tokens
+   ------------------------------------------------------------------- */
+
+:root {
+  --bg: #0F1226;
+  --bg-raised: #171B38;
+  --ink: #E8E6F2;
+  --ink-dim: #9599BC;
+  --ink-faint: #6A6E90;
+  --line: rgba(232, 230, 242, 0.14);
+  --accent: #C9A667;
+  --accent-dim: #8E7C51;
+
+  --moon-lit: #E4DCC6;
+  --moon-lit-hi: #F4EEDD;
+  --moon-dark: #1E2240;
+  --moon-dark-hi: #262B4C;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --content-width: 30rem;
+  --radius: 3px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #EFEDE4;
+    --bg-raised: #FBFAF5;
+    --ink: #23263B;
+    --ink-dim: #5A5E7A;
+    --ink-faint: #8A8EA8;
+    --line: rgba(35, 38, 59, 0.14);
+    --moon-dark: #D9D5C4;
+    --moon-dark-hi: #E6E2D2;
+    --moon-lit: #3A3F63;
+    --moon-lit-hi: #4B5178;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Reset-ish base
+   ------------------------------------------------------------------- */
+
+* { box-sizing: border-box; }
+
+html { color-scheme: dark light; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #lit-clip-circle { transition: cx 0.5s ease; }
+}
+
+/* ---------------------------------------------------------------------
+   Layout
+   ------------------------------------------------------------------- */
+
+.page {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 2.25rem 1.25rem 3rem;
+}
+
+.rule {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2rem 0;
+}
+
+.panel { }
+
+/* ---------------------------------------------------------------------
+   Header
+   ------------------------------------------------------------------- */
+
+.site-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.site-header h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.35rem;
+  color: var(--ink);
+}
+
+.tagline {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+/* ---------------------------------------------------------------------
+   Hero / Moon
+   ------------------------------------------------------------------- */
+
+.hero {
+  text-align: center;
+}
+
+#moon-svg {
+  width: 62vw;
+  max-width: 230px;
+  height: auto;
+  filter: drop-shadow(0 0 26px rgba(201, 166, 103, 0.14));
+}
+
+.moon-rim {
+  stroke: rgba(0, 0, 0, 0.25);
+  stroke-width: 0.75;
+}
+
+.mare {
+  fill: rgba(0, 0, 0, 0.08);
+}
+
+.phase-name {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  margin: 1rem 0 0.15rem;
+}
+
+.phase-stats {
+  display: flex;
+  justify-content: center;
+  gap: 1.75rem;
+  margin: 0.75rem 0 0;
+}
+
+.phase-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phase-stats dt {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin-bottom: 0.15rem;
+}
+
+.phase-stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------
+   Section headings & fact lists
+   ------------------------------------------------------------------- */
+
+.section-heading {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+}
+
+.panel + .panel,
+.section-heading + .fact-list + .section-heading {
+  margin-top: 1.5rem;
+}
+
+.fact-list {
+  margin: 0 0 1.5rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.fact-list:last-child { margin-bottom: 0; }
+
+.fact-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.4rem;
+}
+
+.fact-list dt {
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
+.fact-list dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------
+   Location
+   ------------------------------------------------------------------- */
+
+.location-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.location-status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+}
+
+.location-form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line);
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.field-row label {
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
+.field-row input {
+  width: 9.5rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  padding: 0.4rem 0.55rem;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+
+.field-row input:focus-visible,
+.btn:focus-visible,
+.link-btn:focus-visible,
+#date-slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------- */
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn:hover { border-color: var(--accent); }
+
+.btn-quiet {
+  display: block;
+  margin: 1rem auto 0;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+.link-btn:hover { color: var(--ink); }
+
+/* ---------------------------------------------------------------------
+   Slider
+   ------------------------------------------------------------------- */
+
+.slider-date-label {
+  text-align: center;
+  margin: 0 0 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+#date-slider {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.slider-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin-top: 0.35rem;
+}
+
+/* ---------------------------------------------------------------------
+   Fine print & footer
+   ------------------------------------------------------------------- */
+
+.fine-print {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+.site-footer {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem;
+}
+
+.site-footer summary {
+  cursor: pointer;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+.site-footer details p {
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+  line-height: 1.55;
+}
+
+.site-footer code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+/* ---------------------------------------------------------------------
+   Small screens: keep hero comfortably sized on very narrow phones
+   ------------------------------------------------------------------- */
+
+@media (max-width: 360px) {
+  .phase-stats { gap: 1.1rem; }
+}
+
+/* Wider viewports: content column just stays centered — the design is
+   intentionally a single quiet column at any size, like a page. */
+@media (min-width: 640px) {
+  .page { padding-top: 3.5rem; }
+  #moon-svg { max-width: 260px; }
+}

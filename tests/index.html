@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Moonwatch — astro.js tests</title>
+<style>
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: #0F1226; color: #E8E6F2; padding: 1.5rem; line-height: 1.6; }
+  h1 { font-size: 1.1rem; font-weight: 600; }
+  .pass { color: #8FBF87; }
+  .fail { color: #E28080; }
+  #summary { margin: 1rem 0; font-weight: 600; }
+  li { margin-bottom: 0.25rem; list-style: none; }
+  ul { padding-left: 0; }
+</style>
+</head>
+<body>
+  <h1>astro.js — browser test run</h1>
+  <p>No build step, no server-side anything: this page imports <code>../js/astro.js</code>
+     as an ES module and runs the same checks as <code>tests/astro.test.mjs</code>,
+     right in your browser.</p>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+
+<script type="module">
+import {
+  daysSinceJ2000, toJulianDate, fromJulianDate, sunEclipticLongitude,
+  moonPosition, moonPhase, phaseName, siderealTime, moonAltitude,
+  riseSetForDay, findNextRiseSet, nextNewMoon, nextFullMoon, SYNODIC_MONTH_DAYS,
+} from "../js/astro.js";
+
+const MIN = 60 * 1000, HOUR = 60 * MIN, DAY = 24 * HOUR;
+const results = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, error: e.message });
+  }
+}
+
+function assert(cond, msg) {
+  if (!cond) throw new Error(msg || "assertion failed");
+}
+
+test("toJulianDate / fromJulianDate round-trip", () => {
+  const d = new Date("2026-06-15T00:00:00Z");
+  const back = fromJulianDate(toJulianDate(d));
+  assert(Math.abs(back.getTime() - d.getTime()) < 1000);
+});
+
+test("daysSinceJ2000 is 0 at the J2000 epoch", () => {
+  const j2000 = new Date(Date.UTC(2000, 0, 1, 12, 0, 0));
+  assert(Math.abs(daysSinceJ2000(j2000)) < 1e-9);
+});
+
+test("sunEclipticLongitude stays within [0, 2*PI)", () => {
+  for (let y = 2020; y <= 2030; y++) {
+    const lon = sunEclipticLongitude(daysSinceJ2000(new Date(Date.UTC(y, 5, 1))));
+    assert(lon >= 0 && lon < 2 * Math.PI);
+  }
+});
+
+test("moonPosition distance stays within the Moon's real orbital range", () => {
+  for (let m = 0; m < 12; m++) {
+    const { dist } = moonPosition(daysSinceJ2000(new Date(Date.UTC(2026, m, 15))));
+    assert(dist > 350000 && dist < 410000, "distance " + dist);
+  }
+});
+
+test("illumination is ~0 at a known new moon instant (2026-01-18 ~19:52 UTC)", () => {
+  const { illumination } = moonPhase(new Date("2026-01-18T19:52:00Z"));
+  assert(illumination < 0.01, "illumination was " + illumination);
+});
+
+test("illumination is ~1 at a known full moon instant (2026-01-03 ~10:08 UTC)", () => {
+  const { illumination } = moonPhase(new Date("2026-01-03T10:08:00Z"));
+  assert(illumination > 0.99, "illumination was " + illumination);
+});
+
+test("phase flips from waning to waxing across a new moon", () => {
+  const t = new Date("2026-01-18T19:52:00Z").getTime();
+  assert(moonPhase(new Date(t - 2 * DAY)).waxing === false);
+  assert(moonPhase(new Date(t + 2 * DAY)).waxing === true);
+});
+
+test("phaseName covers the full 0-360 range without gaps", () => {
+  const names = new Set();
+  for (let d = 0; d < 360; d++) names.add(phaseName(d));
+  assert(names.size === 8, "got " + names.size + " distinct names");
+});
+
+test("nextNewMoon matches the known January 2026 new moon (±10 min)", () => {
+  const result = nextNewMoon(new Date("2026-01-01T00:00:00Z"));
+  const expected = new Date("2026-01-18T19:52:00Z");
+  assert(Math.abs(result - expected) / MIN < 10);
+});
+
+test("nextFullMoon matches the known January 2026 full moon (±10 min)", () => {
+  const result = nextFullMoon(new Date("2025-12-20T00:00:00Z"));
+  const expected = new Date("2026-01-03T10:08:00Z");
+  assert(Math.abs(result - expected) / MIN < 10);
+});
+
+test("consecutive new moons are one synodic month apart", () => {
+  const nm1 = nextNewMoon(new Date("2026-03-01T00:00:00Z"));
+  const nm2 = nextNewMoon(new Date(nm1.getTime() + DAY));
+  const gapDays = (nm2 - nm1) / DAY;
+  assert(Math.abs(gapDays - SYNODIC_MONTH_DAYS) < 0.5);
+});
+
+test("riseSetForDay matches a published reference within ~10 minutes", () => {
+  const { rise, set } = riseSetForDay(new Date("2026-03-15T12:00:00Z"), 41.15, -73.99, -240);
+  assert(rise && set, "expected both a rise and a set");
+  assert(Math.abs(rise - new Date("2026-03-15T09:31:00Z")) / MIN < 10);
+  assert(Math.abs(set - new Date("2026-03-15T19:25:00Z")) / MIN < 10);
+});
+
+test("findNextRiseSet always returns a time after the start, within 2 days", () => {
+  const start = new Date("2026-06-01T00:00:00Z");
+  const rise = findNextRiseSet(start, 51.5, -0.13, "rise");
+  const set = findNextRiseSet(start, 51.5, -0.13, "set");
+  assert(rise > start && rise - start < 2 * DAY);
+  assert(set > start && set - start < 2 * DAY);
+});
+
+test("moonAltitude is finite and in range; siderealTime is in range", () => {
+  const { altitudeDeg } = moonAltitude(new Date("2026-06-01T12:00:00Z"), 40, -74);
+  assert(Number.isFinite(altitudeDeg) && altitudeDeg >= -90 && altitudeDeg <= 90);
+  const gst = siderealTime(new Date("2026-06-01T12:00:00Z"));
+  assert(gst >= 0 && gst < 2 * Math.PI);
+});
+
+// ---- render ----
+const list = document.getElementById("results");
+let passed = 0;
+for (const r of results) {
+  const li = document.createElement("li");
+  li.className = r.pass ? "pass" : "fail";
+  li.textContent = (r.pass ? "✓ " : "✗ ") + r.name + (r.error ? " — " + r.error : "");
+  list.appendChild(li);
+  if (r.pass) passed++;
+}
+document.getElementById("summary").textContent =
+  `${passed} / ${results.length} passed`;
+document.getElementById("summary").className = passed === results.length ? "pass" : "fail";
+</script>
+</body>
+</html>
