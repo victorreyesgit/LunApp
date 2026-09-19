@@ -8,13 +8,7 @@
  * localStorage (never sent anywhere).
  */
 
-import {
-  moonPhase,
-  riseSetForDay,
-  findNextRiseSet,
-  nextNewMoon,
-  nextFullMoon,
-} from "./astro.js";
+import { moonPhase, findNextRiseSet, nextFullMoon } from "./astro.js";
 import { createMoonRenderer } from "./moonView.js";
 
 // ---------------------------------------------------------------------------
@@ -37,20 +31,20 @@ const illuminationEl = el("illumination-value");
 const ageEl = el("moon-age");
 const trendEl = el("moon-trend");
 
-const todayRiseEl = el("today-rise");
-const todaySetEl = el("today-set");
-const nextRiseEl = el("next-rise");
-const nextSetEl = el("next-set");
-const nextNewMoonEl = el("next-new-moon");
-const nextFullMoonEl = el("next-full-moon");
 const locationDependentNote = el("location-dependent-note");
+const moonOutNote = el("moon-out-note");
+const comingUpFirstLabel = el("coming-up-first-label");
+const comingUpFirstValue = el("coming-up-first-value");
+const comingUpSecondLabel = el("coming-up-second-label");
+const comingUpSecondValue = el("coming-up-second-value");
+const nextFullMoonDateEl = el("next-full-moon-date");
 
 const slider = el("date-slider");
 const sliderDateLabel = el("slider-date-label");
 const jumpToNowBtn = el("jump-to-now");
 
-const clipCircle = el("lit-clip-circle");
-const renderMoon = createMoonRenderer(clipCircle, 80, 100);
+const clipPolygon = el("lit-clip-polygon");
+const renderMoon = createMoonRenderer(clipPolygon, 80, 100, 100);
 
 // ---------------------------------------------------------------------------
 // State
@@ -81,18 +75,17 @@ const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   minute: "2-digit",
 });
 
-const dateOnlyFormatter = new Intl.DateTimeFormat(undefined, {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-});
-
-function fmtTime(date) {
-  return date ? timeFormatter.format(date) : "—";
-}
-
 function fmtDateTime(date) {
   return date ? dateTimeFormatter.format(date) : "—";
+}
+
+/** Time-only if `date` falls on the same local calendar day as `reference`,
+ *  otherwise a short "weekday, time" so a next-day event isn't mistaken
+ *  for today. */
+function fmtUpcoming(date, reference) {
+  if (!date) return "—";
+  const sameDay = date.toDateString() === reference.toDateString();
+  return sameDay ? timeFormatter.format(date) : dateTimeFormatter.format(date);
 }
 
 // ---------------------------------------------------------------------------
@@ -199,12 +192,6 @@ locationSaveBtn.addEventListener("click", () => {
 // Rendering
 // ---------------------------------------------------------------------------
 
-function tzOffsetMinutes(date) {
-  // Minutes to ADD to UTC to get local time (browser's system timezone,
-  // DST-aware for the given instant).
-  return -date.getTimezoneOffset();
-}
-
 function updatePhasePanel(date) {
   const phase = moonPhase(date);
   phaseNameEl.textContent = phase.phaseName;
@@ -214,30 +201,46 @@ function updatePhasePanel(date) {
   renderMoon(phase.elongationDeg);
 }
 
-function updateLocationDependentPanel(date) {
+/**
+ * "Coming up": whichever of the next moonrise/moonset happens sooner is
+ * shown first, the other below it. If the moonset is the sooner of the
+ * two, the Moon is currently up, so a small note says so.
+ */
+function updateComingUpPanel() {
   if (!location) {
     locationDependentNote.hidden = false;
-    [todayRiseEl, todaySetEl, nextRiseEl, nextSetEl].forEach((n) => (n.textContent = "—"));
+    moonOutNote.hidden = true;
+    comingUpFirstLabel.textContent = "Moonrise";
+    comingUpFirstValue.textContent = "—";
+    comingUpSecondLabel.textContent = "Moonset";
+    comingUpSecondValue.textContent = "—";
     return;
   }
   locationDependentNote.hidden = true;
 
   const { lat, lon } = location;
-
-  const today = riseSetForDay(date, lat, lon, tzOffsetMinutes(date));
-  todayRiseEl.textContent = fmtTime(today.rise);
-  todaySetEl.textContent = fmtTime(today.set);
-
   const now = referenceNow;
   const nextRise = findNextRiseSet(now, lat, lon, "rise");
   const nextSet = findNextRiseSet(now, lat, lon, "set");
-  nextRiseEl.textContent = fmtDateTime(nextRise);
-  nextSetEl.textContent = fmtDateTime(nextSet);
+
+  const moonIsUp = Boolean(nextSet) && (!nextRise || nextSet.getTime() < nextRise.getTime());
+  moonOutNote.hidden = !moonIsUp;
+
+  const first = moonIsUp
+    ? { label: "Moonset", value: nextSet }
+    : { label: "Moonrise", value: nextRise };
+  const second = moonIsUp
+    ? { label: "Moonrise", value: nextRise }
+    : { label: "Moonset", value: nextSet };
+
+  comingUpFirstLabel.textContent = first.label;
+  comingUpFirstValue.textContent = fmtUpcoming(first.value, now);
+  comingUpSecondLabel.textContent = second.label;
+  comingUpSecondValue.textContent = fmtUpcoming(second.value, now);
 }
 
-function updateNextPhasesPanel() {
-  nextNewMoonEl.textContent = fmtDateTime(nextNewMoon(referenceNow));
-  nextFullMoonEl.textContent = fmtDateTime(nextFullMoon(referenceNow));
+function updateNextFullMoon() {
+  nextFullMoonDateEl.textContent = fmtDateTime(nextFullMoon(referenceNow));
 }
 
 function selectedDateFromSlider() {
@@ -248,8 +251,8 @@ function selectedDateFromSlider() {
 function updateAll() {
   const selected = selectedDateFromSlider();
   updatePhasePanel(selected);
-  updateLocationDependentPanel(selected);
-  updateNextPhasesPanel();
+  updateComingUpPanel();
+  updateNextFullMoon();
 
   const isNow = Math.abs(parseFloat(slider.value)) < 0.01;
   sliderDateLabel.textContent = isNow
@@ -273,7 +276,7 @@ jumpToNowBtn.addEventListener("click", () => {
 // Init
 // ---------------------------------------------------------------------------
 
-updateNextPhasesPanel();
+updateNextFullMoon();
 updatePhasePanel(referenceNow);
 requestGeolocation();
 updateAll();

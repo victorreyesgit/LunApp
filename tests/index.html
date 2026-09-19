@@ -29,6 +29,7 @@ import {
   moonPosition, moonPhase, phaseName, siderealTime, moonAltitude,
   riseSetForDay, findNextRiseSet, nextNewMoon, nextFullMoon, SYNODIC_MONTH_DAYS,
 } from "../js/astro.js";
+import { moonBoundaryPoints } from "../js/moonView.js";
 
 const MIN = 60 * 1000, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const results = [];
@@ -125,6 +126,38 @@ test("findNextRiseSet always returns a time after the start, within 2 days", () 
   const set = findNextRiseSet(start, 51.5, -0.13, "set");
   assert(rise > start && rise - start < 2 * DAY);
   assert(set > start && set - start < 2 * DAY);
+});
+
+function polygonArea(points) {
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    area += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(area) / 2;
+}
+
+test("rendered lit area matches illumination at first quarter (was ~39% under the old model)", () => {
+  const radius = 80, fullArea = Math.PI * radius * radius;
+  const fraction = polygonArea(moonBoundaryPoints(90, radius, 200)) / fullArea;
+  assert(Math.abs(fraction - 0.5) < 0.01, "got " + (fraction * 100).toFixed(1) + "%");
+});
+
+test("rendered lit area tracks illumination across the whole cycle", () => {
+  const radius = 80, fullArea = Math.PI * radius * radius;
+  for (const deg of [10, 45, 90, 135, 170, 190, 225, 270, 315, 350]) {
+    const drawn = polygonArea(moonBoundaryPoints(deg, radius, 200)) / fullArea;
+    const expected = (1 - Math.cos((deg * Math.PI) / 180)) / 2;
+    assert(Math.abs(drawn - expected) < 0.01, "deg " + deg + " drew " + (drawn*100).toFixed(1) + "%");
+  }
+});
+
+test("at first quarter the terminator is a straight line, not curved", () => {
+  const points = moonBoundaryPoints(90, 80, 40);
+  const terminatorXs = points.slice(points.length / 2).map(([x]) => x);
+  const maxDeviation = Math.max(...terminatorXs.map((x) => Math.abs(x)));
+  assert(maxDeviation < 0.5, "bulged by " + maxDeviation);
 });
 
 test("moonAltitude is finite and in range; siderealTime is in range", () => {

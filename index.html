@@ -13,7 +13,7 @@
 <div class="page">
 
   <header class="site-header">
-    <h1>Moonwatch</h1>
+    <h1>LunApp</h1>
     <p class="tagline">Everything here is calculated on your device. Nothing is sent anywhere.</p>
   </header>
 
@@ -25,7 +25,7 @@
         <title id="moon-svg-title">Illustration of the Moon's current illuminated shape</title>
         <defs>
           <clipPath id="lit-clip">
-            <circle id="lit-clip-circle" cx="100" cy="100" r="80" />
+            <polygon id="lit-clip-polygon" points="" />
           </clipPath>
           <radialGradient id="lit-shade" cx="38%" cy="34%" r="75%">
             <stop offset="0%" stop-color="var(--moon-lit-hi)" />
@@ -90,25 +90,23 @@
 
     <hr class="rule" />
 
-    <!-- Rise / set -->
-    <section class="panel" aria-label="Moonrise and moonset">
+    <!-- Coming up -->
+    <section class="panel" aria-label="Coming up">
       <p id="location-dependent-note" class="fine-print" hidden>
         Add your location above to see rise and set times.
       </p>
 
-      <h2 class="section-heading">Today</h2>
+      <h2 class="section-heading">Coming up</h2>
+      <p id="moon-out-note" class="moon-out-note" hidden>The Moon is out.</p>
+
       <dl class="fact-list">
-        <div><dt>Moonrise</dt><dd id="today-rise">—</dd></div>
-        <div><dt>Moonset</dt><dd id="today-set">—</dd></div>
+        <div><dt id="coming-up-first-label">Moonrise</dt><dd id="coming-up-first-value">—</dd></div>
+        <div><dt id="coming-up-second-label">Moonset</dt><dd id="coming-up-second-value">—</dd></div>
       </dl>
 
-      <h2 class="section-heading">Coming up</h2>
-      <dl class="fact-list">
-        <div><dt>Next moonrise</dt><dd id="next-rise">—</dd></div>
-        <div><dt>Next moonset</dt><dd id="next-set">—</dd></div>
-        <div><dt>Next new moon</dt><dd id="next-new-moon">—</dd></div>
-        <div><dt>Next full moon</dt><dd id="next-full-moon">—</dd></div>
-      </dl>
+      <p id="next-full-moon-sentence" class="next-full-moon-sentence">
+        Next full moon: <span id="next-full-moon-date">—</span>
+      </p>
     </section>
 
     <hr class="rule" />

@@ -12,10 +12,10 @@
   --accent: #C9A667;
   --accent-dim: #8E7C51;
 
-  --moon-lit: #E4DCC6;
-  --moon-lit-hi: #F4EEDD;
-  --moon-dark: #1E2240;
-  --moon-dark-hi: #262B4C;
+  --moon-lit: #EDE9DC;
+  --moon-lit-hi: #FAF7EE;
+  --moon-dark: #131316;
+  --moon-dark-hi: #1C1C20;
 
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -26,16 +26,15 @@
 
 @media (prefers-color-scheme: light) {
   :root {
+    /* Page chrome adapts to the system theme, but the Moon graphic itself
+       does not: illuminated stays a pale warm white and the dark side
+       stays near-black in both themes, the way an actual Moon does. */
     --bg: #EFEDE4;
     --bg-raised: #FBFAF5;
     --ink: #23263B;
     --ink-dim: #5A5E7A;
     --ink-faint: #8A8EA8;
     --line: rgba(35, 38, 59, 0.14);
-    --moon-dark: #D9D5C4;
-    --moon-dark-hi: #E6E2D2;
-    --moon-lit: #3A3F63;
-    --moon-lit-hi: #4B5178;
   }
 }
 
@@ -55,10 +54,6 @@ body {
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  #lit-clip-circle { transition: cx 0.5s ease; }
 }
 
 /* ---------------------------------------------------------------------
@@ -189,6 +184,24 @@ body {
   align-items: baseline;
   border-bottom: 1px solid var(--line);
   padding-bottom: 0.4rem;
+}
+
+.moon-out-note {
+  margin: -0.25rem 0 0.9rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-style: italic;
+}
+
+.next-full-moon-sentence {
+  margin: 1.1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+}
+
+.next-full-moon-sentence span {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .fact-list dt {

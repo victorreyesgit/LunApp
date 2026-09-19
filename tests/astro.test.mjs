@@ -29,6 +29,7 @@ import {
   nextFullMoon,
   SYNODIC_MONTH_DAYS,
 } from "../js/astro.js";
+import { moonBoundaryPoints } from "../js/moonView.js";
 
 const MINUTES = 60 * 1000;
 const HOURS = 60 * MINUTES;
@@ -180,6 +181,84 @@ test("findNextRiseSet always returns a time after the start", () => {
   // either kind should always be within 2 days.
   assert.ok(rise.getTime() - start.getTime() < 2 * DAYS);
   assert.ok(set.getTime() - start.getTime() < 2 * DAYS);
+});
+
+// The "Coming up" panel shows whichever of next rise/next set happens
+// sooner, first, and treats "moonset is sooner" as "the Moon is up". This
+// checks both branches actually occur as the Moon cycles through a day.
+test("moon-is-up flips correctly between consecutive rise/set pairs", () => {
+  const lat = 51.5;
+  const lon = -0.13;
+  let sawMoonUp = false;
+  let sawMoonDown = false;
+
+  for (let h = 0; h < 48; h += 3) {
+    const now = new Date(Date.UTC(2026, 5, 1, 0, 0, 0) + h * HOURS);
+    const nextRise = findNextRiseSet(now, lat, lon, "rise");
+    const nextSet = findNextRiseSet(now, lat, lon, "set");
+    const moonIsUp = Boolean(nextSet) && (!nextRise || nextSet.getTime() < nextRise.getTime());
+    if (moonIsUp) sawMoonUp = true;
+    else sawMoonDown = true;
+  }
+
+  assert.ok(sawMoonUp, "expected at least one 'Moon is up' moment in 48h");
+  assert.ok(sawMoonDown, "expected at least one 'Moon is down' moment in 48h");
+});
+
+// ---------------------------------------------------------------------------
+// Rendered shape vs. reported illumination
+//
+// The visualization must not just look plausible — its actual drawn area
+// has to match the illumination percentage shown next to it. An earlier
+// version used a "two overlapping circles" approximation that looked
+// reasonable but was quantitatively wrong (e.g. it drew ~39% lit at exact
+// first quarter, while the label correctly said 50%). These tests check
+// the geometry directly via the shoelace formula so that kind of mismatch
+// can't silently come back.
+// ---------------------------------------------------------------------------
+
+function polygonArea(points) {
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    area += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(area) / 2;
+}
+
+test("rendered lit area matches moonPhase().illumination at first quarter", () => {
+  const radius = 80;
+  const fullArea = Math.PI * radius * radius;
+  const points = moonBoundaryPoints(90, radius, 200);
+  const fraction = polygonArea(points) / fullArea;
+  assert.ok(
+    Math.abs(fraction - 0.5) < 0.01,
+    `expected ~50% lit at first quarter, got ${(fraction * 100).toFixed(1)}%`
+  );
+});
+
+test("rendered lit area matches the illumination fraction across the cycle", () => {
+  const radius = 80;
+  const fullArea = Math.PI * radius * radius;
+  for (const deg of [10, 45, 90, 135, 170, 190, 225, 270, 315, 350]) {
+    const points = moonBoundaryPoints(deg, radius, 200);
+    const drawnFraction = polygonArea(points) / fullArea;
+    const expectedFraction = (1 - Math.cos((deg * Math.PI) / 180)) / 2;
+    assert.ok(
+      Math.abs(drawnFraction - expectedFraction) < 0.01,
+      `at ${deg}deg expected ${(expectedFraction * 100).toFixed(1)}% but drew ${(drawnFraction * 100).toFixed(1)}%`
+    );
+  }
+});
+
+test("at first quarter the terminator is a near-vertical straight line", () => {
+  // A real quarter Moon's terminator is a straight diameter, not curved.
+  const points = moonBoundaryPoints(90, 80, 40);
+  // Terminator half of the boundary is the second half of the point list.
+  const terminatorXs = points.slice(points.length / 2).map(([x]) => x);
+  const maxDeviation = Math.max(...terminatorXs.map((x) => Math.abs(x)));
+  assert.ok(maxDeviation < 0.5, `terminator bulged by up to ${maxDeviation}`);
 });
 
 test("moonAltitude is a finite number and siderealTime stays in range", () => {
